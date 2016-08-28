@@ -28,9 +28,11 @@
   "dependencies": {
     "bl": "^1.1.2",
     "browserify": "^13.1.0",
+    "bundle-collapser": "^1.2.1",
     "create-html": "^1.1.0",
     "css-extract": "^1.1.1",
     "errorify": "^0.3.1",
+    "es2020": "^1.1.8",
     "get-server-port": "^1.0.0",
     "meow": "^3.7.0",
     "mkdirp": "^0.5.1",
@@ -42,6 +44,7 @@
     "server-router": "^3.0.0",
     "sheetify": "^5.0.5",
     "string-to-stream": "^1.1.0",
+    "uglifyify": "^3.0.2",
     "watchify": "^3.7.0",
     "xtend": "^4.0.1"
   },

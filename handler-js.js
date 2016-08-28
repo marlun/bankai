@@ -1,3 +1,6 @@
+const bundleCollapser = require('bundle-collapser')
+const uglifyify = require('uglifyify')
+const es2020 = require('es2020')
 const assert = require('assert')
 const bl = require('bl')
 const cssExtract = require('css-extract')
@@ -56,6 +59,9 @@ function js (state) {
     }
 
     if (!state.optimize) {
+      b.transform(es2020)
+      b.transform(bundleCollapser)
+      b.transform(uglifyify)
       b.plugin(errorify)
       b = watchify(b)
     }
