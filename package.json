@@ -42,7 +42,7 @@
     "resolve": "^1.1.7",
     "run-parallel": "^1.1.6",
     "server-router": "^3.0.0",
-    "sheetify": "^5.0.5",
+    "sheetify": "^5.2.0",
     "stdout-stream": "^1.4.0",
     "string-to-stream": "^1.1.0",
     "watchify": "^3.7.0",
