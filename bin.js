@@ -2,10 +2,12 @@
 
 const explain = require('explain-error')
 const mapLimit = require('map-limit')
+const eos = require('end-of-stream')
 const resolve = require('resolve')
 const garnish = require('garnish')
 const mkdirp = require('mkdirp')
 const subarg = require('subarg')
+const xtend = require('xtend')
 const bole = require('bole')
 const http = require('http')
 const path = require('path')
@@ -27,6 +29,7 @@ const argv = subarg(process.argv.slice(2), {
   alias: {
     css: 'c',
     debug: 'd',
+    dir: 'D',
     help: 'h',
     html: 'H',
     js: 'j',
@@ -50,6 +53,7 @@ const usage = `
     Options:
       -c, --css=<subargs>     Pass subarguments to sheetify
       -d, --debug             Include sourcemaps [default: false]
+      -D, --dir               Pass subarguments to dir
       -h, --help              Print usage
       -H, --html=<subargs>    Pass subarguments to create-html
       -j, --js=<subargs>      Pass subarguments to browserify
@@ -86,7 +90,7 @@ function main (argv) {
   }
 
   if (argv.v) {
-    console.info(require('../package.json').version)
+    console.info(require('./package.json').version)
     return process.exit()
   }
 
@@ -108,10 +112,19 @@ function main (argv) {
 }
 
 function start (entry, argv, done) {
-  const assets = bankai(entry, argv)
+  const assets = bankai(entry, xtend(argv, {
+    dir: { basedir: process.cwd() }
+  }))
   const port = argv.port
 
   http.createServer((req, res) => {
+    if (/^\/assets\/.*/.test(req.url)) {
+      const dir$ = assets.dir(req.url, req, res)
+      eos(dir$, function (err) {
+        if (err) return (res.statusCode = 404 && res.end('404 not found'))
+      })
+      return dir$.pipe(res)
+    }
     switch (req.url) {
       case '/': return assets.html(req, res).pipe(res)
       case '/bundle.js': return assets.js(req, res).pipe(res)

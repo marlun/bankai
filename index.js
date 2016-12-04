@@ -2,14 +2,16 @@ const watchifyRequest = require('watchify-request')
 const sheetify = require('sheetify/transform')
 const cssExtract = require('css-extract')
 const createHtml = require('create-html')
+const stream = require('readable-stream')
 const browserify = require('browserify')
 const concat = require('concat-stream')
 const watchify = require('watchify')
 const assert = require('assert')
-const stream = require('stream')
 const xtend = require('xtend')
 const from = require('from2')
+const path = require('path')
 const pump = require('pump')
+const fs = require('fs')
 
 module.exports = Bankai
 
@@ -26,11 +28,14 @@ function Bankai (entry, opts) {
 
   this.htmlDisabled = (opts.html === false)
   this.cssDisabled = (opts.css === false)
+  this.dirDisabled = (opts.dir === false)
   this.optimize = opts.optimize
   this.cssQueue = []
+  this.opts = opts
 
   opts.html = opts.html || {}
   opts.css = opts.css || {}
+  opts.dir = opts.dir || {}
   opts.js = opts.js || {}
 
   if (opts.debug) opts.js = xtend(opts.js, { debug: true })
@@ -109,4 +114,35 @@ Bankai.prototype.css = function (req, res) {
   } else {
     return from([this._css])
   }
+}
+
+// (obj, obj) -> readStream
+Bankai.prototype.dir = function (filename, req, res) {
+  assert.notEqual(this.dirDisabled, true, 'bankai: dir is disabled')
+  assert.equal(typeof filename, 'string', 'bankai.dir: filename should be a string')
+
+  const opts = this.opts.dir
+  const basedir = opts.basedir || ''
+  const filepath = path.join(basedir, filename)
+
+  const pts = new stream.PassThrough()
+
+  fs.readdir(path.dirname(filepath), function (err, files) {
+    console.log('err', err)
+    if (err) return pts.emit('error', err)
+
+    const cleaned = filename
+      .replace(new RegExp(filepath), '')
+      .replace(/^\//, '')
+
+    console.log('err', files, cleaned)
+    if (files.indexOf(cleaned) === -1) {
+      return pts.emit('error', 'bankai.dir: could not find file ' + filename)
+    }
+
+    const read$ = fs.createReadStream(filepath)
+    pump(read$, pts)
+  })
+
+  return pts
 }

@@ -73,9 +73,13 @@ const http = require('http')
 const path = require('path')
 
 const clientPath = path.join(__dirname, 'client.js')
-const assets = bankai(clientPath)
+const dirOpts = { basedir: path.join(__dirname, 'assets') }
+const assets = bankai(clientPath, { dir: dirOpts })
 
 http.createServer((req, res) => {
+  if (/^\/assets\/.*/.test(req.url)) {
+    return assets.dir(req.url, req, res).pipe(res)
+  }
   switch (req.url) {
     case '/': return assets.html(req, res).pipe(res)
     case '/bundle.js': return assets.js(req, res).pipe(res)
@@ -98,6 +102,7 @@ http.createServer((req, res) => {
     Options:
       -c, --css=<subargs>     Pass subarguments to sheetify
       -d, --debug             Include sourcemaps [default: false]
+      -D, --dir               Pass subarguments to dir
       -h, --help              Print usage
       -H, --html=<subargs>    Pass subarguments to create-html
       -j, --js=<subargs>      Pass subarguments to browserify
@@ -137,6 +142,12 @@ Return a `html` stream. Sets correct header values if `req` and `res` are passed
 
 ### readableStream = assets.css(req?, res?)
 Return a `css` stream. Sets correct header values if `req` and `res` are passed.
+
+### readableStream = assets.dir(name, req?, res?)
+Return a raw file stream based on the name of a file. Sets correct header
+values if `req` and `res` are passed based on a file extension. Does not
+support nested directories for pragmatic security concerns (we're no security
+experts; PR welcome for recursive traversal if you know what you're doing).
 
 ## See Also
 - [budo](https://www.npmjs.com/package/budo)
